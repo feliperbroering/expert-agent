@@ -133,7 +133,7 @@ class AgentSpec(BaseModel):
 class AgentSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    apiVersion: Literal["expert-agent/v1"] = "expert-agent/v1"
+    apiVersion: Literal["expert-agent/v1"] = "expert-agent/v1"  # noqa: N815 — k8s-style field name
     kind: Literal["AgentSchema"] = "AgentSchema"
     metadata: AgentMetadata
     spec: AgentSpec
@@ -159,17 +159,17 @@ class AgentSchema(BaseModel):
 
 
 __all__ = [
-    "AgentSchema",
     "AgentMetadata",
+    "AgentSchema",
     "AgentSpec",
-    "ModelSpec",
+    "ContextCacheSpec",
+    "GroundingSpec",
     "IdentitySpec",
     "KnowledgeSpec",
-    "ContextCacheSpec",
-    "MemorySpec",
-    "ShortTermMemorySpec",
     "LongTermMemorySpec",
     "LongTermPersistenceSpec",
-    "GroundingSpec",
+    "MemorySpec",
+    "ModelSpec",
     "RateLimitSpec",
+    "ShortTermMemorySpec",
 ]

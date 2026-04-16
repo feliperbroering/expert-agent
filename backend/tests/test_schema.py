@@ -1,14 +1,10 @@
 from pathlib import Path
 
 import pytest
+from app.schema import AgentSchema
 from pydantic import ValidationError
 
-from app.schema import AgentSchema
-
-
-EXAMPLE_SCHEMA = (
-    Path(__file__).resolve().parents[2] / "example-schema" / "agent_schema.yaml"
-)
+EXAMPLE_SCHEMA = Path(__file__).resolve().parents[2] / "example-schema" / "agent_schema.yaml"
 
 
 def test_example_schema_loads() -> None:

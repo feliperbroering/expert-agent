@@ -67,16 +67,31 @@ if ! gcloud firestore databases describe --database="(default)" \
   gcloud firestore databases create \
     --location="${REGION}" \
     --type=firestore-native \
+    --project="${PROJECT_ID}" || echo "  (Firestore may already exist; continuing.)"
+fi
+
+echo "==> Provisioning gemini-api-key secret (if missing)..."
+if ! gcloud secrets describe gemini-api-key --project="${PROJECT_ID}" >/dev/null 2>&1; then
+  gcloud secrets create gemini-api-key \
+    --replication-policy=automatic \
     --project="${PROJECT_ID}"
+  echo ""
+  echo "  Secret 'gemini-api-key' CREATED but has NO value yet."
+  echo "  Add the first version with:"
+  echo ""
+  echo "    echo -n 'YOUR_GEMINI_API_KEY' | \\"
+  echo "      gcloud secrets versions add gemini-api-key --data-file=- --project=${PROJECT_ID}"
+  echo ""
+  echo "  Get a key at https://aistudio.google.com/apikey"
+else
+  echo "  Secret 'gemini-api-key' already exists."
 fi
 
 echo ""
-echo "==> Bootstrap complete ✓"
+echo "==> Bootstrap complete."
 echo ""
 echo "Next steps:"
-echo "  1. Provision a Gemini API key (https://aistudio.google.com/apikey)"
-echo "  2. Store it in Secret Manager:"
-echo "     echo -n 'YOUR_KEY' | gcloud secrets create gemini-api-key --data-file=- --project=${PROJECT_ID}"
-echo "  3. Run 'tofu apply' in infra/platform/"
-echo "  4. Run 'tofu apply' in infra/chroma/"
-echo "  5. Run 'tofu apply' in infra/agent/ per agent"
+echo "  1. (If not done) add gemini-api-key secret value (see above)."
+echo "  2. cd infra/platform && tofu init -backend-config=\"bucket=${PROJECT_ID}-tfstate\" && tofu apply"
+echo "  3. cd infra/chroma && tofu init -backend-config=\"bucket=${PROJECT_ID}-tfstate\" && tofu apply"
+echo "  4. Per agent: cd infra/agent && tofu init -backend-config=\"bucket=${PROJECT_ID}-tfstate\" -backend-config=\"prefix=agent/AGENT_ID\" && tofu apply"
