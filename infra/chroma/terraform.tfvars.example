@@ -1,0 +1,8 @@
+# Copy to `terraform.tfvars` (gitignored) or pass with -var-file.
+project_id = "micromed-agents"
+region     = "southamerica-east1"
+
+# Optional overrides:
+# chroma_image = "chromadb/chroma:0.5.20"
+# cpu          = "2"
+# memory       = "4Gi"

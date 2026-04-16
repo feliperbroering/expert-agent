@@ -1,0 +1,15 @@
+# Copy to `terraform.tfvars` (gitignored) or pass with -var-file / -var flags.
+project_id = "micromed-agents"
+region     = "southamerica-east1"
+
+# Required per-agent settings:
+agent_id = "ecg-expert"
+image    = "southamerica-east1-docker.pkg.dev/micromed-agents/expert-agent/backend:v0.1.0"
+
+# Optional overrides:
+# min_instances     = 0
+# max_instances     = 10
+# cpu               = "1"
+# memory            = "1Gi"
+# cache_ttl_seconds = 3600
+# admin_key_secret_name = "admin-key-ecg-expert"
