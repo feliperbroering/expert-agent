@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/feliperun/expert-agent/compare/v0.1.3...v0.1.4) (2026-04-17)
+
+
+### Bug Fixes
+
+* **testkit:** Make 03_update Log calls alignment-safe ([#7](https://github.com/feliperun/expert-agent/issues/7)) ([55b6142](https://github.com/feliperun/expert-agent/commit/55b61424507fdb5e52366a31a62ba0cff5ce3f10))
+
 ## [0.1.3](https://github.com/feliperun/expert-agent/compare/v0.1.2...v0.1.3) (2026-04-17)
 
 
