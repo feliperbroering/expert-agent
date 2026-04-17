@@ -51,6 +51,7 @@ service-account*.json
 *.tfvars
 !*.tfvars.example
 *.tfplan
+tfplan
 crash.log
 
 # Docker
