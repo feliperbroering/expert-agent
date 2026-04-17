@@ -173,7 +173,8 @@ class GeminiAIStudioClient:
 
             client = storage.Client()
             blob = client.bucket(bucket_name).blob(object_key)
-            return blob.download_as_bytes()
+            data: bytes = blob.download_as_bytes()
+            return data
 
         data = await asyncio.to_thread(_download)
         buffer = io.BytesIO(data)
@@ -246,7 +247,7 @@ class GeminiAIStudioClient:
         sdk_contents = [_to_sdk_content(c) for c in contents]
         tools = [gt.Tool(google_search=gt.GoogleSearch())] if grounding else None
         thinking_config = (
-            gt.ThinkingConfig(thinkingBudget=self._thinking_budget)
+            gt.ThinkingConfig(thinking_budget=self._thinking_budget)
             if self._thinking_budget is not None
             else None
         )

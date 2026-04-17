@@ -136,6 +136,23 @@ exclude = ["tests/", "build/", "dist/"]
 module = ["mempalace.*", "chromadb.*", "mock_firestore.*", "slowapi.*"]
 ignore_missing_imports = true
 
+# Robot Framework ships its own dynamic APIs (no type stubs) and is only
+# present when the optional `[test]` extra is installed — skip strict
+# checking on the testkit module and ignore the missing stubs globally so
+# CI (which only installs `[dev]`) doesn't fail on imports.
+[[tool.mypy.overrides]]
+module = ["robot.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["expert.testkit.*", "expert.commands.test"]
+disallow_untyped_decorators = false
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["google.cloud.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 addopts = "-ra --strict-markers --cov-report=term-missing --import-mode=importlib"

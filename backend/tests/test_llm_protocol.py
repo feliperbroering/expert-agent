@@ -103,18 +103,27 @@ def _make_client(*, thinking_budget: int | None = None) -> tuple[GeminiAIStudioC
     return client, fake
 
 
-def test_fake_llm_satisfies_protocol() -> None:
+def test_fake_llm_satisfies_protocol(fake_llm_cls: type) -> None:
     # Runtime structural check — the fake in conftest implements LLMClient.
-    from tests.conftest import FakeLLM
-
-    instance = FakeLLM()
+    instance = fake_llm_cls()
     assert isinstance(instance, LLMClient)
 
 
 @pytest.mark.asyncio
-async def test_create_cache_builds_config_from_files() -> None:
+async def test_create_cache_builds_config_from_files(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     pytest.importorskip("google.genai")
     client, fake = _make_client()
+
+    # The production path mirrors gs:// URIs into the File API (see
+    # `_mirror_gcs_to_file_api`), which would hit GCS + ADC and fail in
+    # hermetic CI. Short-circuit it: we only care that the cache config is
+    # built correctly from the list of docs.
+    async def _fake_mirror(self: Any, doc: FileRef) -> str:
+        return f"files/fake-{doc.gcs_uri.rsplit('/', 1)[-1]}"
+
+    monkeypatch.setattr(GeminiAIStudioClient, "_mirror_gcs_to_file_api", _fake_mirror)
 
     docs = [
         FileRef(gcs_uri="gs://bucket/a.pdf", mime_type="application/pdf"),

@@ -58,6 +58,15 @@ def firestore_mock() -> Any:
     return MockFirestore()
 
 
+@pytest.fixture
+def fake_llm_cls() -> type[FakeLLM]:
+    """Expose the `FakeLLM` class to tests without relying on
+    `from tests.conftest import ...`, which doesn't work under
+    `--import-mode=importlib`.
+    """
+    return FakeLLM
+
+
 class FakeLLM:
     """In-memory stand-in for `LLMClient`. Used across tests."""
 
