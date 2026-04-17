@@ -1,4 +1,4 @@
-"""Top-level `typer` app for `agent-cli`."""
+"""Top-level `typer` app for `expert`."""
 
 from __future__ import annotations
 
@@ -7,11 +7,11 @@ from typing import Annotated
 import typer
 
 from . import __version__
-from .commands import ask, count_tokens, init, sessions, sync, validate
+from .commands import ask, count_tokens, init, sessions, sync, test, validate
 from .ui import console
 
 app = typer.Typer(
-    name="agent-cli",
+    name="expert",
     help="CLI for the **expert-agent** framework — scaffold, validate, sync, ask.",
     no_args_is_help=True,
     rich_markup_mode="markdown",
@@ -21,7 +21,7 @@ app = typer.Typer(
 
 def _version_callback(value: bool) -> None:
     if value:
-        console.print(f"agent-cli {__version__}")
+        console.print(f"expert {__version__}")
         raise typer.Exit(code=0)
 
 
@@ -50,6 +50,10 @@ app.command(
 app.command(name="sync", help="Push the local knowledge base to a running agent.")(sync.cmd)
 app.command(name="ask", help="Send a question to the agent and stream the answer.")(ask.cmd)
 app.add_typer(sessions.app, name="sessions", help="Manage user sessions (LGPD).")
+app.command(
+    name="test",
+    help="Run the packaged Robot Framework E2E kit against the current agent.",
+)(test.cmd)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-"""Runtime configuration for `agent-cli`.
+"""Runtime configuration for `expert`.
 
 Configuration sources (highest priority first):
 
@@ -89,7 +89,7 @@ def make_http_client(
     base_url = endpoint or (str(cfg.endpoint).rstrip("/") if cfg.endpoint else "")
     token = api_key or cfg.api_key or ""
     headers: dict[str, str] = {
-        "User-Agent": "agent-cli",
+        "User-Agent": "expert",
         "Accept": "application/json",
     }
     if token:

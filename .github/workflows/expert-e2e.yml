@@ -1,0 +1,119 @@
+name: expert-e2e (reusable)
+
+# Reusable workflow that any repo housing an expert-agent deployment can call
+# to run the packaged Robot Framework kit. Usage from a private agent repo:
+#
+#   jobs:
+#     e2e:
+#       uses: feliperbroering/expert-agent/.github/workflows/expert-e2e.yml@main
+#       with:
+#         schema: ecg-expert/agent_schema.yaml
+#         suite: 05_ask_latency
+#       secrets:
+#         endpoint: ${{ secrets.EXPERT_AGENT_ENDPOINT }}
+#         api-key:  ${{ secrets.EXPERT_AGENT_API_KEY }}
+#
+# The caller repo only needs the schema checked out — the CLI, the suites, and
+# the runner image come from this repo, so upgrades are a simple `@version`
+# bump.
+
+on:
+  workflow_call:
+    inputs:
+      schema:
+        description: Path (relative to the caller checkout) of agent_schema.yaml
+        required: false
+        type: string
+        default: agent_schema.yaml
+      suite:
+        description: 'Robot suite stem to run (e.g. "05_ask_latency"). Omit for all.'
+        required: false
+        type: string
+        default: ""
+      sample-question:
+        description: Question used by the latency suite.
+        required: false
+        type: string
+        default: "Summarise your knowledge base in one short sentence."
+      max-ttft-ms:
+        description: Budget (ms) for time-to-first-token.
+        required: false
+        type: string
+        default: "60000"
+      max-total-ms:
+        description: Budget (ms) for the full answer.
+        required: false
+        type: string
+        default: "180000"
+      cli-ref:
+        description: 'Git ref of expert-agent to install (e.g. "main", "v0.2.0").'
+        required: false
+        type: string
+        default: main
+      python-version:
+        description: Python version.
+        required: false
+        type: string
+        default: "3.12"
+    secrets:
+      endpoint:
+        description: EXPERT_AGENT_ENDPOINT (only needed for suites 04–06).
+        required: false
+      api-key:
+        description: EXPERT_AGENT_API_KEY (only needed for suites 04–06).
+        required: false
+
+jobs:
+  run:
+    name: expert test
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      EXPERT_AGENT_ENDPOINT: ${{ secrets.endpoint }}
+      EXPERT_AGENT_API_KEY: ${{ secrets.api-key }}
+      EXPERT_AGENT_SCHEMA: ${{ inputs.schema }}
+      EXPERT_AGENT_SAMPLE_QUESTION: ${{ inputs.sample-question }}
+      EXPERT_AGENT_MAX_TTFT_MS: ${{ inputs.max-ttft-ms }}
+      EXPERT_AGENT_MAX_TOTAL_MS: ${{ inputs.max-total-ms }}
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install expert CLI with test extras
+        run: |
+          uv tool install \
+            "expert-agent[test] @ git+https://github.com/feliperbroering/expert-agent.git@${{ inputs.cli-ref }}"
+          expert --version
+
+      - name: Show CLI & suites
+        run: |
+          expert --help
+          expert test --list
+
+      - name: Run expert test
+        id: test
+        run: |
+          args=()
+          if [ -n "${{ inputs.suite }}" ]; then
+            args+=(--suite "${{ inputs.suite }}")
+          fi
+          if [ -f "${{ inputs.schema }}" ]; then
+            args+=(--schema "${{ inputs.schema }}")
+          fi
+          expert test "${args[@]}" --output-dir ./e2e-results
+
+      - name: Upload Robot reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: expert-e2e-reports
+          path: e2e-results/
+          if-no-files-found: ignore

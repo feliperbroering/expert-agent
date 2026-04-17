@@ -1,4 +1,4 @@
-"""`agent-cli sessions` — list/show/delete user sessions (LGPD support)."""
+"""`expert sessions` — list/show/delete user sessions (LGPD support)."""
 
 from __future__ import annotations
 

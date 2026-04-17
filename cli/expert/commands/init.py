@@ -1,4 +1,4 @@
-"""`agent-cli init` — scaffold a new agent project directory."""
+"""`expert init` — scaffold a new agent project directory."""
 
 from __future__ import annotations
 
@@ -80,7 +80,7 @@ Respond in the language the user writes to you.
 _README_TEMPLATE = """\
 # {name}
 
-An ultra-specialist agent scaffolded with `agent-cli init`.
+An ultra-specialist agent scaffolded with `expert init`.
 
 ## Layout
 
@@ -95,19 +95,19 @@ An ultra-specialist agent scaffolded with `agent-cli init`.
 3. Validate locally:
 
    ```sh
-   agent-cli validate --schema ./agent_schema.yaml
+   expert validate --schema ./agent_schema.yaml
    ```
 
 4. Estimate token usage to size the Context Cache:
 
    ```sh
-   agent-cli count-tokens --schema ./agent_schema.yaml
+   expert count-tokens --schema ./agent_schema.yaml
    ```
 
 5. Deploy and then sync the documents to the running agent:
 
    ```sh
-   agent-cli sync --schema ./agent_schema.yaml
+   expert sync --schema ./agent_schema.yaml
    ```
 """
 
@@ -136,25 +136,58 @@ def cmd(
         bool,
         typer.Option("--force", help="Overwrite files if the destination already exists."),
     ] = False,
+    name: Annotated[
+        str | None,
+        typer.Option(
+            "--name",
+            help="Agent id (lowercase kebab-case). Skips the interactive prompt.",
+        ),
+    ] = None,
+    description: Annotated[
+        str | None,
+        typer.Option(
+            "--description",
+            help="Short description. Skips the interactive prompt.",
+        ),
+    ] = None,
+    yes: Annotated[
+        bool,
+        typer.Option(
+            "--yes",
+            "-y",
+            help="Accept all defaults without prompting (CI-safe).",
+        ),
+    ] = False,
 ) -> None:
     """Scaffold a new agent project at `PATH`."""
     default_name = path.name or "my-agent"
     if not _AGENT_NAME_RE.match(default_name):
         default_name = "my-agent"
 
-    name = _prompt_name(default_name)
-    description: str = typer.prompt(
-        "Description",
-        default=f"Ultra-specialist agent '{name}'.",
-    ).strip()
+    if name:
+        if not _AGENT_NAME_RE.match(name):
+            print_error("--name must match ^[a-z][a-z0-9-]*$.")
+            raise typer.Exit(code=1)
+    elif yes:
+        name = default_name
+    else:
+        name = _prompt_name(default_name)
+
+    if description is None:
+        fallback = f"Ultra-specialist agent '{name}'."
+        if yes:
+            description = fallback
+        else:
+            description = typer.prompt("Description", default=fallback).strip()
+    description = description.strip()
 
     path = path.resolve()
     schema_file = path / "agent_schema.yaml"
     identity_file = path / "prompts" / "identity.md"
-    docs_keep = path / "docs" / ".gitkeep"
+    docs_sample = path / "docs" / "README.md"
     readme_file = path / "README.md"
 
-    existing = [p for p in (schema_file, identity_file, docs_keep, readme_file) if p.exists()]
+    existing = [p for p in (schema_file, identity_file, docs_sample, readme_file) if p.exists()]
     if existing and not force:
         print_error(
             f"destination {path} already contains: "
@@ -174,12 +207,20 @@ def cmd(
             _IDENTITY_TEMPLATE.format(title=name.replace("-", " ").title()),
             encoding="utf-8",
         )
-        docs_keep.write_text("", encoding="utf-8")
+        # Ship a placeholder doc so the schema validates out of the box (the
+        # contract requires the docs/ dir to match include_patterns). Users
+        # replace it with the real corpus.
+        docs_sample.write_text(
+            f"# {name} — knowledge base\n\n"
+            "Replace this placeholder with your corpus files "
+            "(`.md`, `.pdf`, `.txt`).\n",
+            encoding="utf-8",
+        )
         readme_file.write_text(_README_TEMPLATE.format(name=name), encoding="utf-8")
     except OSError as exc:
         print_error(f"failed to write files: {exc}")
         raise typer.Exit(code=1) from exc
 
     print_success(f"Created new agent at [cyan]{path}[/cyan].")
-    print_info("Next step: [bold]agent-cli validate --schema ./agent_schema.yaml[/bold]")
+    print_info("Next step: [bold]expert validate --schema ./agent_schema.yaml[/bold]")
     console.print()

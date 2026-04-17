@@ -30,7 +30,7 @@ You define an agent declaratively:
 - **`/memory/...`** — long-term semantic recall (verbatim, not summarised).
 - **`/health`** + **`/ready`** — liveness + dependency probes.
 
-A Python CLI (`agent-cli`) handles scaffolding, validation, sync, and
+A Python CLI (`expert`) handles scaffolding, validation, sync, and
 ad-hoc queries against any deployed agent.
 
 ---
@@ -125,11 +125,11 @@ gcloud builds submit . \
 uv tool install "git+https://github.com/feliperbroering/expert-agent.git"
 
 # Scaffold an agent locally
-agent-cli init my-expert
+expert init my-expert
 cd my-expert
 $EDITOR prompts/identity.md            # define behaviour
 cp ~/papers/*.pdf docs/                # drop in your corpus
-agent-cli validate --schema ./agent_schema.yaml
+expert validate --schema ./agent_schema.yaml
 
 # Provision Cloud Run + IAM + secrets for this agent
 cd ../infra/agent
@@ -148,14 +148,14 @@ echo -n "$ADMIN_KEY" | \
   gcloud secrets versions add admin-key-my-expert --data-file=- --project="${PROJECT_ID}"
 
 # Push docs + create the Context Cache
-agent-cli sync \
+expert sync \
   --schema ./agent_schema.yaml \
   --endpoint "$(gcloud run services describe agent-my-expert \
                   --region="${REGION}" --format='value(status.url)')" \
   --api-key "$ADMIN_KEY"
 
 # Ask something
-agent-cli ask "What does my corpus say about X?" \
+expert ask "What does my corpus say about X?" \
   --endpoint <SERVICE_URL> --api-key "$ADMIN_KEY"
 ```
 
@@ -216,15 +216,62 @@ A full annotated example lives in [`example-schema/`](./example-schema/).
 ## CLI reference
 
 ```text
-agent-cli init <name>           Scaffold a new agent project
-agent-cli validate              Validate agent_schema.yaml against the contract
-agent-cli count-tokens          Estimate corpus tokens (Context Cache budgeting)
-agent-cli sync                  Push docs + rebuild Context Cache
-agent-cli ask "<question>"      Stream answer from a deployed agent
-agent-cli sessions list/delete  Manage user sessions (LGPD)
+expert init <name>           Scaffold a new agent project
+expert validate              Validate agent_schema.yaml against the contract
+expert count-tokens          Estimate corpus tokens (Context Cache budgeting)
+expert sync                  Push docs + rebuild Context Cache
+expert ask "<question>"      Stream answer from a deployed agent
+expert sessions list/delete  Manage user sessions (LGPD)
+expert test                  Run the packaged E2E Robot Framework kit
 ```
 
 Every command supports `--help` for full options.
+
+---
+
+## End-to-end testing
+
+A ready-made Robot Framework kit ships with the CLI. Install with the
+`[test]` extra and run against any agent:
+
+```bash
+uv tool install 'expert-agent[test] @ git+https://github.com/feliperbroering/expert-agent.git'
+export EXPERT_AGENT_ENDPOINT=https://my-agent-xxxx.a.run.app
+export EXPERT_AGENT_API_KEY=$(gcloud secrets versions access latest --secret=my-agent-api-key)
+
+expert test --schema ./agent_schema.yaml      # all suites
+expert test --suite 05_ask_latency            # single suite
+expert test --list                            # discover suites
+```
+
+Suites shipped:
+
+| Suite             | Offline? | Asserts                                                 |
+|-------------------|:--------:|---------------------------------------------------------|
+| `01_validate`     | yes      | `expert validate` succeeds on the agent schema          |
+| `02_create`       | yes      | `expert init --yes` scaffolds + validates out of the box|
+| `03_update`       | yes      | Edit → validate loop preserves schema integrity         |
+| `04_deploy`       | no       | `/health`, `/ready` respond 200; unauth calls get 401   |
+| `05_ask_latency`  | no       | Warmup + steady-state TTFT budgets + cache hit signal   |
+| `06_sessions`     | no       | LGPD: create → list → delete round-trip                 |
+
+### Reusable GitHub Actions workflow
+
+Private agent repos inherit the same suites via a reusable workflow — no
+submodules or copy-paste. See
+[`.github/workflows/expert-e2e.yml`](.github/workflows/expert-e2e.yml):
+
+```yaml
+jobs:
+  e2e:
+    uses: feliperbroering/expert-agent/.github/workflows/expert-e2e.yml@main
+    with:
+      schema: ecg-expert/agent_schema.yaml
+      suite: 05_ask_latency                  # optional — omit to run all
+    secrets:
+      endpoint: ${{ secrets.EXPERT_AGENT_ENDPOINT }}
+      api-key:  ${{ secrets.EXPERT_AGENT_API_KEY }}
+```
 
 ---
 
@@ -255,7 +302,7 @@ backend/        FastAPI app (`app.main:app`) + tests
   app/docs/     Manifest model + DocsSyncService (incremental SHA diff)
   app/memory/   Short-term (Firestore) + long-term (MemPalace/Chroma) + orchestrator
   app/routes/   /ask /docs/sync /sessions /memory /health
-cli/            `agent-cli` (Typer + Rich)
+cli/            `expert` (Typer + Rich)
 example-schema/ Annotated AgentSchema + prompt template
 infra/          OpenTofu stacks: platform, chroma, agent (per agent)
 scripts/        bootstrap-project.sh, bootstrap_docs_to_gcs.py
@@ -287,7 +334,7 @@ your corpus is.
 ## Roadmap
 
 - [ ] Vertex AI client tested at parity with AI Studio (grounding + cache).
-- [ ] Built-in evaluation harness (`agent-cli eval` against gold Q&A pairs).
+- [ ] Built-in evaluation harness (`expert eval` against gold Q&A pairs).
 - [ ] OpenTelemetry export wired into Cloud Trace by default.
 - [ ] Multi-tenant agent (per-tenant memory + cache) for SaaS use cases.
 - [ ] Web UI / playground for non-technical curators.

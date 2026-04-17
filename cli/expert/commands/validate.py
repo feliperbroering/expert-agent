@@ -1,4 +1,4 @@
-"""`agent-cli validate` — load and validate an `agent_schema.yaml` locally."""
+"""`expert validate` — load and validate an `agent_schema.yaml` locally."""
 
 from __future__ import annotations
 

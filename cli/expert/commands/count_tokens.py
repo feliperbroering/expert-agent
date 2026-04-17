@@ -1,4 +1,4 @@
-"""`agent-cli count-tokens` — estimate token usage of the knowledge base.
+"""`expert count-tokens` — estimate token usage of the knowledge base.
 
 Uses `google.genai` for textual files. For PDF files we cannot count tokens
 without uploading to GCS / the Files API, so we fall back to a heuristic

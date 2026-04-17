@@ -60,9 +60,17 @@ dev = [
     "mypy>=1.13",
     "types-PyYAML",
 ]
+test = [
+    # E2E harness used by `expert test`. Kept as an *optional* extra so the
+    # default `uv tool install` stays lean (<30MB). Install with:
+    #   uv tool install "expert-agent[test] @ git+https://github.com/…"
+    "robotframework>=7.0",
+    "robotframework-requests>=0.9.7",
+    "robotframework-jsonlibrary>=0.5",
+]
 
 [project.scripts]
-agent-cli = "agent_cli.main:app"
+expert = "expert.main:app"
 expert-agent-backend = "app.main:run"
 
 [project.urls]
@@ -83,7 +91,15 @@ required-environments = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["backend/app", "cli/agent_cli"]
+packages = ["backend/app", "cli/expert"]
+# Ship the Robot Framework suites (*.robot, *.resource, *.py helpers) *inside*
+# the wheel so that `expert test` works out of the box for anyone who installs
+# the CLI with the `[test]` extra — including private agent repos that only
+# add `expert-agent[test]` as a dependency.
+artifacts = [
+    "cli/expert/testkit/**/*.robot",
+    "cli/expert/testkit/**/*.resource",
+]
 
 [tool.ruff]
 line-length = 100
@@ -123,7 +139,7 @@ testpaths = ["backend/tests", "cli/tests"]
 pythonpath = ["backend", "cli"]
 
 [tool.coverage.run]
-source = ["backend/app", "cli/agent_cli"]
+source = ["backend/app", "cli/expert"]
 branch = true
 
 [tool.coverage.report]

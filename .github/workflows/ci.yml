@@ -36,7 +36,7 @@ jobs:
         run: uv run ruff format --check .
 
       - name: Mypy
-        run: uv run mypy backend/app cli/agent_cli
+        run: uv run mypy backend/app cli/expert
 
   test:
     name: Test (Python ${{ matrix.python-version }})
@@ -58,7 +58,7 @@ jobs:
       - run: uv sync --extra dev
 
       - name: Run tests
-        run: uv run pytest --cov=backend/app --cov=cli/agent_cli --cov-report=xml
+        run: uv run pytest --cov=backend/app --cov=cli/expert --cov-report=xml
 
       - uses: codecov/codecov-action@v4
         if: always()

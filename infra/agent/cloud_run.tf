@@ -81,7 +81,7 @@ resource "google_cloud_run_v2_service" "agent" {
         value = var.project_id
       }
       # Load the agent schema + prompts from GCS so the container image stays
-      # agent-agnostic. The path must match where `agent-cli sync` (or the
+      # agent-agnostic. The path must match where `expert sync` (or the
       # operator) uploaded the schema bundle.
       env {
         name  = "SCHEMA_PATH"

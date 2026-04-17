@@ -1,4 +1,4 @@
-"""`agent-cli ask` — send a question to an agent and stream the answer.
+"""`expert ask` — send a question to an agent and stream the answer.
 
 Streaming UX:
 

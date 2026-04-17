@@ -51,7 +51,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /venv /venv
 WORKDIR /app
 COPY --chown=app:app backend/app ./app
-COPY --chown=app:app cli/agent_cli ./agent_cli
+COPY --chown=app:app cli/expert ./expert
 
 USER app
 

@@ -1,4 +1,4 @@
-"""Tests for `agent-cli count-tokens`."""
+"""Tests for `expert count-tokens`."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from agent_cli.commands import count_tokens
-from agent_cli.main import app
+from expert.commands import count_tokens
+from expert.main import app
 from typer.testing import CliRunner
 
 SCHEMA_TEMPLATE = """\

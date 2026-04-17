@@ -1,11 +1,11 @@
-"""Tests for `agent-cli validate`."""
+"""Tests for `expert validate`."""
 
 from __future__ import annotations
 
 import shutil
 from pathlib import Path
 
-from agent_cli.main import app
+from expert.main import app
 from typer.testing import CliRunner
 
 EXAMPLE_SCHEMA_DIR = Path(__file__).resolve().parents[2] / "example-schema"

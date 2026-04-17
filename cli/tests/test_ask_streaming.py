@@ -1,4 +1,4 @@
-"""Tests for `agent-cli ask`.
+"""Tests for `expert ask`.
 
 The event/field names here MUST stay in lockstep with the server in
 `backend/app/routes/ask.py` (event types `token`, `citation`, `done`,
@@ -11,7 +11,7 @@ import json
 
 import httpx
 import respx
-from agent_cli.main import app
+from expert.main import app
 from typer.testing import CliRunner
 
 

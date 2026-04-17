@@ -1,4 +1,4 @@
-"""`agent-cli sync` — push the local knowledge base to a running agent.
+"""`expert sync` — push the local knowledge base to a running agent.
 
 The local file list (with sha256 + size) is POSTed to `{endpoint}/docs/sync`.
 The server replies with a diff describing added/updated/removed files. This

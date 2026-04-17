@@ -1,10 +1,10 @@
-"""Tests for `agent-cli init`."""
+"""Tests for `expert init`."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from agent_cli.main import app
+from expert.main import app
 from app.schema import AgentSchema
 from typer.testing import CliRunner
 
@@ -21,12 +21,12 @@ def test_init_scaffolds_project(tmp_path: Path) -> None:
 
     schema_path = dest / "agent_schema.yaml"
     identity_path = dest / "prompts" / "identity.md"
-    docs_keep = dest / "docs" / ".gitkeep"
+    docs_sample = dest / "docs" / "README.md"
     readme = dest / "README.md"
 
     assert schema_path.is_file()
     assert identity_path.is_file()
-    assert docs_keep.is_file()
+    assert docs_sample.is_file()
     assert readme.is_file()
 
     schema = AgentSchema.from_yaml(schema_path)
