@@ -19,7 +19,7 @@ If you're an AI coding agent (Cursor, Claude Code, Codex, Aider, etc.) **read [A
 Requires Python 3.12+, [`uv`](https://docs.astral.sh/uv/), and (optionally) Docker + OpenTofu if you're touching infra.
 
 ```bash
-git clone https://github.com/feliperbroering/expert-agent
+git clone https://github.com/feliperun/expert-agent
 cd expert-agent
 
 uv venv --python 3.12

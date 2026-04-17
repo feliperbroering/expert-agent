@@ -63,3 +63,10 @@ logs/
 # Test artifacts
 .hypothesis/
 coverage.xml
+
+# gh-run-monitor skill artefacts
+gemini_comments.json
+run_result.txt
+run_status.txt
+run_conclusion.txt
+failed_logs.txt

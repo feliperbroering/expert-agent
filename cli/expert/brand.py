@@ -78,7 +78,7 @@ def render_brand(console: Console, *, include_version: bool = True) -> None:
         ver.append("   ")
         ver.append("MIT", style=_DIM)
         ver.append("   ")
-        ver.append("github.com/feliperbroering/expert-agent", style=_DIM)
+        ver.append("github.com/feliperun/expert-agent", style=_DIM)
         console.print(ver)
 
 
