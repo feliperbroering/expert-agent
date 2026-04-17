@@ -53,6 +53,42 @@ def _rate_limit_key(request: Request) -> str:
     return get_remote_address(request)
 
 
+def _materialize_schema_tree(source: str, dest_dir: Path) -> Path:
+    """Download a schema bundle (agent_schema.yaml + prompts/*) from GCS if needed.
+
+    `source` may be either a local path or a `gs://bucket/prefix/agent_schema.yaml`
+    URL; returns the local path to the YAML file. Prompts referenced by relative
+    paths get mirrored alongside it so the existing resolution logic keeps
+    working unchanged.
+    """
+    if not source.startswith("gs://"):
+        return Path(source)
+
+    from urllib.parse import urlparse
+
+    from google.cloud import storage  # type: ignore[attr-defined]
+
+    parsed = urlparse(source)
+    bucket_name = parsed.netloc
+    yaml_object = parsed.path.lstrip("/")
+    prefix = yaml_object.rsplit("/", 1)[0] + "/" if "/" in yaml_object else ""
+
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+
+    for blob in bucket.list_blobs(prefix=prefix):
+        rel = blob.name[len(prefix):]
+        if not rel:
+            continue
+        target = dest_dir / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        blob.download_to_filename(str(target))
+
+    local_yaml = dest_dir / yaml_object.rsplit("/", 1)[-1]
+    return local_yaml
+
+
 def _load_schema(path: Path) -> AgentSchema:
     if path.exists():
         return AgentSchema.from_yaml(path)
@@ -181,7 +217,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings: Settings = app.state.settings
     logger = get_logger(__name__)
 
-    schema_path = settings.schema_path
+    raw_schema_path = str(settings.schema_path)
+    if raw_schema_path.startswith("gs://"):
+        schema_path = _materialize_schema_tree(raw_schema_path, Path("/tmp/agent-schema"))
+    else:
+        schema_path = Path(settings.schema_path)
     schema = _load_schema(schema_path)
     app.state.schema = schema
 

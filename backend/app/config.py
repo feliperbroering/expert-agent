@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO")
 
     agent_id: str = Field(default="example-expert")
-    schema_path: Path = Field(default=Path("/app/schema/agent_schema.yaml"))
+    schema_path: str | Path = Field(default=Path("/app/schema/agent_schema.yaml"))
 
     gemini_api_key: SecretStr = Field(default=SecretStr(""))
     admin_key: SecretStr = Field(default=SecretStr(""))

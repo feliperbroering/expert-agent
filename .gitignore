@@ -1,5 +1,4 @@
-# Plans & personal context (contain sensitive info like project IDs, emails, schemas in draft)
-agent-expert.plan.md
+# Plans & personal context
 *.plan.md
 .plan/
 .cursor/plans/

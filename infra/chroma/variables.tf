@@ -10,9 +10,9 @@ variable "region" {
 }
 
 variable "chroma_image" {
-  description = "Pinned ChromaDB container image. Avoid `latest` in production."
+  description = "Pinned ChromaDB container image. Avoid `latest` in production. Must stay in major/minor sync with `chromadb-client` in pyproject.toml."
   type        = string
-  default     = "chromadb/chroma:0.5.20"
+  default     = "chromadb/chroma:1.5.8"
 }
 
 variable "cpu" {

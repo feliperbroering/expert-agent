@@ -1,0 +1,17 @@
+.git/
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.pyc
+*.pyo
+node_modules/
+.terraform/
+terraform.tfstate*
+*.tfplan
+agent-expert.plan.md
+*.plan.md
+.env
+.env.*
+!.env.example

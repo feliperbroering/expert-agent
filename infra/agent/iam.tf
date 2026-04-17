@@ -15,32 +15,30 @@ resource "google_service_account" "agent" {
   display_name = "expert-agent runtime SA for agent '${var.agent_id}'"
 }
 
-# --- GCS: docs bucket (scoped to this agent's prefix) ---
-
+# --- GCS: docs + backups buckets ---
+#
+# Conditional IAM at the object prefix level cannot cover `storage.objects.list`
+# because that permission is bucket-scoped (the resource path does NOT include
+# `/objects/<prefix>/...`). A condition like `startsWith(".../objects/<id>/")`
+# therefore blocks list requests entirely, which breaks the schema bootstrap
+# (`list_blobs(prefix=...)` at startup) and the DocsSyncService manifest walk.
+#
+# Trade-off: we grant unconditional objectAdmin on the shared buckets and
+# enforce per-agent prefix discipline in the application layer. Cross-agent
+# reads are possible if an agent misuses the client, so each agent SA is
+# separate (blast radius = one agent) and audit logs are enabled at the project
+# level. Revisit with `storage.objectListPrefix` API attribute when it ships
+# with a stable IAM condition helper.
 resource "google_storage_bucket_iam_member" "agent_docs" {
   bucket = data.terraform_remote_state.platform.outputs.docs_bucket
   role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${google_service_account.agent.email}"
-
-  condition {
-    title       = "only-own-prefix"
-    description = "Restrict access to gs://DOCS_BUCKET/${var.agent_id}/*"
-    expression  = "resource.name.startsWith(\"projects/_/buckets/${data.terraform_remote_state.platform.outputs.docs_bucket}/objects/${var.agent_id}/\")"
-  }
 }
-
-# --- GCS: backups bucket (scoped to this agent's prefix) ---
 
 resource "google_storage_bucket_iam_member" "agent_backups" {
   bucket = data.terraform_remote_state.platform.outputs.backups_bucket
   role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${google_service_account.agent.email}"
-
-  condition {
-    title       = "only-own-prefix"
-    description = "Restrict access to gs://BACKUPS_BUCKET/${var.agent_id}/*"
-    expression  = "resource.name.startsWith(\"projects/_/buckets/${data.terraform_remote_state.platform.outputs.backups_bucket}/objects/${var.agent_id}/\")"
-  }
 }
 
 # --- Firestore ---
@@ -68,13 +66,26 @@ resource "google_secret_manager_secret_iam_member" "agent_gemini_key" {
 }
 
 # --- Chroma: allow this agent to invoke the Chroma Cloud Run service ---
+#
+# Chroma is reachable ONLY from the project's VPC (ingress=INTERNAL_ONLY) and
+# the chroma stack grants `allUsers` run.invoker because there's no practical
+# way to rotate ID tokens inside Chroma's HTTP client. The agent still needs
+# VPC egress (configured in cloud_run.tf) for the call to succeed.
 
-resource "google_cloud_run_v2_service_iam_member" "agent_invokes_chroma" {
+# --- Ingress: allow public HTTPS invocation ---
+#
+# The Cloud Run IAM layer would otherwise steal the `Authorization: Bearer`
+# header (Cloud Run expects an ID token there) and collide with the app's
+# own bearer-token scheme (admin key + user key). Making the service
+# publicly invokable lets the app be the single source of truth for auth;
+# defense-in-depth comes from HTTPS, the app's constant-time key check,
+# and slowapi rate limits.
+resource "google_cloud_run_v2_service_iam_member" "agent_public_invoker" {
   project  = var.project_id
   location = var.region
-  name     = data.terraform_remote_state.chroma.outputs.chroma_service_name
+  name     = google_cloud_run_v2_service.agent.name
   role     = "roles/run.invoker"
-  member   = "serviceAccount:${google_service_account.agent.email}"
+  member   = "allUsers"
 }
 
 # --- Observability ---

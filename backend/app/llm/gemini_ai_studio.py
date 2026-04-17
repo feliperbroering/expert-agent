@@ -33,7 +33,9 @@ from .protocol import (
 
 logger = structlog.get_logger(__name__)
 
-# Conservative default — may not match the production model (gemini-3.1-pro).
+# Conservative default for unit tests / smoke runs. Production agents pin a
+# real Pro tier (e.g. ``gemini-2.5-pro``) via ``spec.model.name`` in their
+# AgentSchema; bump together with the SDK version when a newer Pro ships.
 DEFAULT_MODEL = "gemini-2.0-flash-exp"
 
 _TRANSIENT_EXC: tuple[type[BaseException], ...] = (TimeoutError, ConnectionError)
@@ -70,8 +72,8 @@ class GeminiAIStudioClient:
     api_key:
         Gemini AI Studio API key (secret).
     model:
-        Model identifier, e.g. ``"gemini-2.0-flash-exp"`` or
-        ``"gemini-3.1-pro"`` once generally available.
+        Model identifier, e.g. ``"gemini-2.5-pro"`` or
+        ``"gemini-2.0-flash-exp"`` for cheaper smoke tests.
     max_citations:
         Upper bound on citations surfaced per generation chunk.
     """
@@ -107,7 +109,7 @@ class GeminiAIStudioClient:
     ) -> CacheRef:
         from google.genai import types as gt
 
-        parts = [gt.Part.from_uri(file_uri=doc.gcs_uri, mime_type=doc.mime_type) for doc in docs]
+        parts = [await self._part_from_doc(doc) for doc in docs]
         config = gt.CreateCachedContentConfig(
             contents=[gt.Content(role="user", parts=parts)] if parts else [],
             system_instruction=system_instruction,
@@ -131,6 +133,60 @@ class GeminiAIStudioClient:
             file_count=len(docs),
         )
         return CacheRef(name=cached.name, expire_time=expire_time, model=self._model)
+
+    async def _part_from_doc(self, doc: FileRef) -> Any:
+        """Build a `types.Part` for a single doc.
+
+        The Gemini AI Studio (`v1beta`) caches API does NOT accept `gs://`
+        URIs — only File API URIs. For Vertex you can pass `gs://` directly,
+        but here we transparently mirror GCS bytes into the File API on demand.
+        Result: the cache is built from File API uploads while GCS remains the
+        durable source of truth (so re-syncs are cheap and the agent stays
+        portable across LLM providers).
+        """
+        from google.genai import types as gt
+
+        if not doc.gcs_uri.startswith("gs://"):
+            return gt.Part.from_uri(file_uri=doc.gcs_uri, mime_type=doc.mime_type)
+
+        file_uri = await self._mirror_gcs_to_file_api(doc)
+        return gt.Part.from_uri(file_uri=file_uri, mime_type=doc.mime_type)
+
+    async def _mirror_gcs_to_file_api(self, doc: FileRef) -> str:
+        """Download a GCS object once, upload it to the File API, return its URI.
+
+        File API uploads survive ~48h, so we don't bother caching the URI: each
+        cache rebuild re-uploads, which is fine because the rebuild itself is
+        rare (TTL ≥ 1h) and File API ingestion is cheap and parallel.
+        """
+        import asyncio
+        import io
+        from urllib.parse import urlparse
+
+        parsed = urlparse(doc.gcs_uri)
+        bucket_name, object_key = parsed.netloc, parsed.path.lstrip("/")
+
+        def _download() -> bytes:
+            from google.cloud import storage
+
+            client = storage.Client()
+            blob = client.bucket(bucket_name).blob(object_key)
+            return blob.download_as_bytes()
+
+        data = await asyncio.to_thread(_download)
+        buffer = io.BytesIO(data)
+        display_name = object_key.rsplit("/", 1)[-1]
+
+        from google.genai import types as gt
+
+        uploaded = await self._client.aio.files.upload(
+            file=buffer,
+            config=gt.UploadFileConfig(
+                mime_type=doc.mime_type,
+                display_name=display_name,
+            ),
+        )
+        return str(uploaded.uri)
 
     async def update_cache_ttl(self, cache: CacheRef, ttl_seconds: int) -> None:
         from google.genai import types as gt

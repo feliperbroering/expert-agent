@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field
 from sse_starlette.sse import EventSourceResponse
 
@@ -125,6 +125,7 @@ async def _generate_with_fallback(
 
 @router.post("/ask")
 async def ask(
+    request: Request,
     payload: AskRequest,
     user_id: AuthenticatedUser,
     llm: LLMClientDep,
@@ -145,6 +146,12 @@ async def ask(
         user_message=payload.message,
     )
 
+    # Honour the schema's grounding flag. Gemini AI Studio rejects
+    # `tools=GoogleSearch` together with `cachedContent`, so an agent that
+    # leans on its Context Cache MUST keep grounding off.
+    schema = request.app.state.schema
+    grounding_enabled = bool(schema.spec.grounding.enabled)
+
     if payload.stream:
         return EventSourceResponse(
             _stream_events(
@@ -154,13 +161,14 @@ async def ask(
                 cache_manager=cache_manager,
                 orchestrator=orchestrator,
                 contents=contents,
+                grounding=grounding_enabled,
             ),
             media_type="text/event-stream",
         )
 
     accumulator = _Accumulator()
     async for chunk in _generate_with_fallback(
-        llm=llm, cache_manager=cache_manager, contents=contents, grounding=True
+        llm=llm, cache_manager=cache_manager, contents=contents, grounding=grounding_enabled
     ):
         accumulator.absorb(chunk)
 
@@ -188,6 +196,7 @@ async def _stream_events(
     cache_manager: Any,
     orchestrator: Any,
     contents: list[Any],
+    grounding: bool,
 ) -> AsyncIterator[dict[str, str]]:
     accumulator = _Accumulator()
     started = time.perf_counter()
@@ -196,7 +205,7 @@ async def _stream_events(
             llm=llm,
             cache_manager=cache_manager,
             contents=contents,
-            grounding=True,
+            grounding=grounding,
         ):
             accumulator.absorb(chunk)
             if chunk.text:
