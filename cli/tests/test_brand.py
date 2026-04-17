@@ -15,7 +15,7 @@ def test_brand_command_prints_wordmark_and_tagline() -> None:
     assert "╭───╮" in result.output
     # Version footer.
     assert "MIT" in result.output
-    assert "github.com/feliperbroering/expert-agent" in result.output
+    assert "github.com/feliperun/expert-agent" in result.output
 
 
 def test_version_flag_renders_brand() -> None:

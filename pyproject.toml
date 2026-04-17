@@ -74,9 +74,9 @@ expert = "expert.main:main"
 expert-agent-backend = "app.main:run"
 
 [project.urls]
-Homepage = "https://github.com/feliperbroering/expert-agent"
-Repository = "https://github.com/feliperbroering/expert-agent"
-Issues = "https://github.com/feliperbroering/expert-agent/issues"
+Homepage = "https://github.com/feliperun/expert-agent"
+Repository = "https://github.com/feliperun/expert-agent"
+Issues = "https://github.com/feliperun/expert-agent/issues"
 
 [build-system]
 requires = ["hatchling"]

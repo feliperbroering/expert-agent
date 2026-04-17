@@ -77,14 +77,14 @@ expert which
 On your machine:
 
 ```bash
-uv tool install "git+https://github.com/feliperbroering/expert-agent.git"
+uv tool install "git+https://github.com/feliperun/expert-agent.git"
 expert --version
 ```
 
 If you also want the packaged Robot Framework kit:
 
 ```bash
-uv tool install "expert-agent[test] @ git+https://github.com/feliperbroering/expert-agent.git"
+uv tool install "expert-agent[test] @ git+https://github.com/feliperun/expert-agent.git"
 ```
 
 ---
@@ -238,7 +238,7 @@ on:
 
 jobs:
   e2e:
-    uses: feliperbroering/expert-agent/.github/workflows/expert-e2e.yml@main
+    uses: feliperun/expert-agent/.github/workflows/expert-e2e.yml@main
     with:
       schema: agent_schema.yaml
     secrets:
@@ -269,7 +269,7 @@ jobs:
             schema: dermatology/agent_schema.yaml
             endpoint_secret: DERM_AGENT_ENDPOINT
             api_key_secret: DERM_AGENT_API_KEY
-    uses: feliperbroering/expert-agent/.github/workflows/expert-e2e.yml@main
+    uses: feliperun/expert-agent/.github/workflows/expert-e2e.yml@main
     with:
       agent: ${{ matrix.agent.name }}
       schema: ${{ matrix.agent.schema }}

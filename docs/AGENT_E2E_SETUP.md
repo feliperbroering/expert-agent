@@ -119,7 +119,7 @@ on:
 
 jobs:
   e2e:
-    uses: feliperbroering/expert-agent/.github/workflows/expert-e2e.yml@<<ref>>
+    uses: feliperun/expert-agent/.github/workflows/expert-e2e.yml@<<ref>>
     with:
       schema: <<path/to/agent_schema.yaml>>
       suite: ${{ inputs.suite || '' }}
@@ -163,7 +163,7 @@ your repo correctly. You only need the offline suites for this check:
 
 ```bash
 # 1. Install once.
-uv tool install 'expert-agent[test] @ git+https://github.com/feliperbroering/expert-agent.git@<<ref>>'
+uv tool install 'expert-agent[test] @ git+https://github.com/feliperun/expert-agent.git@<<ref>>'
 
 # 2. From the repo root, point at your schema and skip the Gemini-bound suite.
 expert test \
@@ -234,7 +234,7 @@ jobs:
         agent:
           - { name: my-expert, schema: my-expert/agent_schema.yaml, endpoint_secret: MY_EXPERT_ENDPOINT, key_secret: MY_EXPERT_API_KEY }
           - { name: derm,      schema: derm-expert/agent_schema.yaml, endpoint_secret: DERM_ENDPOINT,    key_secret: DERM_API_KEY }
-    uses: feliperbroering/expert-agent/.github/workflows/expert-e2e.yml@<<ref>>
+    uses: feliperun/expert-agent/.github/workflows/expert-e2e.yml@<<ref>>
     with:
       schema: ${{ matrix.agent.schema }}
       sample-question: "ping"
@@ -270,7 +270,7 @@ exists exactly so every agent stays on the same baseline.
 | `05_ask_latency` fails on `ttft_ms` budget                                               | The deployment is genuinely slow (cold start, big context cache rebuild).                                    | Either bump `max-ttft-ms`, or set Cloud Run `min_instances >= 1` to keep one warm.                                            |
 | `06_sessions` returns `404`                                                              | Backend running an old image without `/sessions` endpoint.                                                   | Redeploy with `expert-agent >= v0.1.0` and re-run.                                                                            |
 | `count-tokens` test fails: `404 NOT_FOUND for model …`                                   | The Gemini model in the schema is deprecated or unavailable for `countTokens`.                               | The default workflow already excludes `requires-gemini` — if you re-included it, drop the include or fix the model in schema. |
-| Workflow can't find `expert-agent/.github/workflows/expert-e2e.yml`                      | `cli-ref:` / `uses:` ref is wrong, or the upstream is private to your account.                               | Use a published tag (`v0.1.1`+) or `main`; verify with `gh api /repos/feliperbroering/expert-agent/contents/.github/workflows`. |
+| Workflow can't find `expert-agent/.github/workflows/expert-e2e.yml`                      | `cli-ref:` / `uses:` ref is wrong, or the upstream is private to your account.                               | Use a published tag (`v0.1.1`+) or `main`; verify with `gh api /repos/feliperun/expert-agent/contents/.github/workflows`. |
 
 ---
 

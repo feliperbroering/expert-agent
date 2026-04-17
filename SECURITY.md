@@ -16,7 +16,7 @@
 
 Report vulnerabilities privately through one of:
 
-1. **GitHub private advisory** — [new advisory](https://github.com/feliperbroering/expert-agent/security/advisories/new) (preferred — keeps the timeline tied to the repo).
+1. **GitHub private advisory** — [new advisory](https://github.com/feliperun/expert-agent/security/advisories/new) (preferred — keeps the timeline tied to the repo).
 2. **Email** — [hi@felipe.run](mailto:hi@felipe.run) with subject `[expert-agent security]`. Please include:
    - A description of the issue and its impact.
    - Steps to reproduce (or a proof-of-concept).

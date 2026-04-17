@@ -13,7 +13,7 @@
 
 declarative ultra-specialist agents on Cloud Run — Gemini long-context, Context Cache, persistent memory.
 
-[![CI](https://github.com/feliperbroering/expert-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/feliperbroering/expert-agent/actions/workflows/ci.yml)
+[![CI](https://github.com/feliperun/expert-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/feliperun/expert-agent/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/)
 [![Status: alpha](https://img.shields.io/badge/status-alpha-orange.svg)](#status)
@@ -63,10 +63,10 @@ A Python CLI (`expert`) handles scaffolding, validation, sync, ad-hoc queries, m
 
 ```bash
 # uv (recommended — single static binary experience)
-uv tool install "git+https://github.com/feliperbroering/expert-agent.git"
+uv tool install "git+https://github.com/feliperun/expert-agent.git"
 
 # or pipx
-pipx install "git+https://github.com/feliperbroering/expert-agent.git"
+pipx install "git+https://github.com/feliperun/expert-agent.git"
 ```
 
 Verify:
@@ -262,7 +262,7 @@ Every command supports `--help`, `--agent <name>` (or `@alias`), `--endpoint`, `
 A ready-made Robot Framework kit ships with the CLI. Install with the `[test]` extra:
 
 ```bash
-uv tool install 'expert-agent[test] @ git+https://github.com/feliperbroering/expert-agent.git'
+uv tool install 'expert-agent[test] @ git+https://github.com/feliperun/expert-agent.git'
 export EXPERT_AGENT_ENDPOINT=https://my-agent-xxxx.a.run.app
 export EXPERT_AGENT_API_KEY=$(gcloud secrets versions access latest --secret=admin-key-my-expert)
 
@@ -289,7 +289,7 @@ Private agent repos inherit the same suites via a reusable workflow — no submo
 ```yaml
 jobs:
   e2e:
-    uses: feliperbroering/expert-agent/.github/workflows/expert-e2e.yml@main
+    uses: feliperun/expert-agent/.github/workflows/expert-e2e.yml@main
     with:
       schema: my-expert/agent_schema.yaml
       suite: 05_ask_latency               # optional — omit to run everything

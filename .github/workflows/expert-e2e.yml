@@ -5,7 +5,7 @@ name: expert-e2e (reusable)
 #
 #   jobs:
 #     e2e:
-#       uses: feliperbroering/expert-agent/.github/workflows/expert-e2e.yml@main
+#       uses: feliperun/expert-agent/.github/workflows/expert-e2e.yml@main
 #       with:
 #         schema: my-expert/agent_schema.yaml
 #         suite: 05_ask_latency
@@ -97,7 +97,7 @@ jobs:
       - name: Install expert CLI with test extras
         run: |
           uv tool install \
-            "expert-agent[test] @ git+https://github.com/feliperbroering/expert-agent.git@${{ inputs.cli-ref }}"
+            "expert-agent[test] @ git+https://github.com/feliperun/expert-agent.git@${{ inputs.cli-ref }}"
           expert --version
 
       - name: Show CLI & suites
