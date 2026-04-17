@@ -17,7 +17,7 @@ class ModelSpec(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     provider: Literal["gemini", "gemini-vertex"] = "gemini"
-    name: str = Field(default="gemini-3.1-pro", min_length=1)
+    name: str = Field(default="gemini-2.5-pro", min_length=1)
     temperature: Annotated[float, Field(ge=0.0, le=2.0)] = 0.3
     max_output_tokens: Annotated[int, Field(ge=256, le=65_536)] = 8_192
     top_p: Annotated[float, Field(ge=0.0, le=1.0)] = 0.95

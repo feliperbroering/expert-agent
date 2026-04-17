@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       agent_id:
-        description: "Agent ID to deploy (e.g., ecg-expert). Leave empty to only build+push image."
+        description: "Agent ID to deploy (matches the directory name in the agents repo). Leave empty to only build+push image."
         required: false
         type: string
       environment:
@@ -21,9 +21,13 @@ permissions:
   id-token: write
 
 env:
-  GCP_PROJECT: micromed-agents
-  GCP_REGION: southamerica-east1
-  REGISTRY: southamerica-east1-docker.pkg.dev
+  # Configure these as repository or environment variables in GitHub
+  # (Settings → Secrets and variables → Actions → Variables):
+  #   GCP_PROJECT  - target Google Cloud project ID
+  #   GCP_REGION   - target region (e.g. us-central1, southamerica-east1)
+  GCP_PROJECT: ${{ vars.GCP_PROJECT }}
+  GCP_REGION: ${{ vars.GCP_REGION }}
+  REGISTRY: ${{ vars.GCP_REGION }}-docker.pkg.dev
 
 jobs:
   build-push:
@@ -77,10 +81,14 @@ jobs:
     runs-on: ubuntu-24.04
     environment: ${{ github.event.inputs.environment }}
     steps:
+      # Agents (schemas + docs) live in a separate repo so this open-source
+      # backend repo stays generic. Configure these in GitHub:
+      #   vars.AGENTS_REPO    - "owner/repo" of the private agents repo
+      #   secrets.AGENTS_REPO_PAT - PAT with `contents:read` on that repo
       - uses: actions/checkout@v4
         with:
-          repository: micromedio/micromed-agents
-          token: ${{ secrets.MICROMED_AGENTS_PAT }}
+          repository: ${{ vars.AGENTS_REPO }}
+          token: ${{ secrets.AGENTS_REPO_PAT }}
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2

@@ -1,8 +1,7 @@
 # expert-agent
 
 > Ultra-specialist AI agents as a service — **NotebookLM as an API**, powered by
-> Gemini 3.1 Pro long-context + context caching, with multi-layer persistent
-> memory.
+> Gemini long-context + context caching, with multi-layer persistent memory.
 
 [![CI](https://github.com/feliperbroering/expert-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/feliperbroering/expert-agent/actions/workflows/ci.yml)
 
@@ -41,9 +40,6 @@ are **ultra-specialized in a single knowledge domain**. You give it:
                                              ▼
                                     gs://{proj}-memory
 ```
-
-See [`agent-expert.plan.md`](./agent-expert.plan.md) (gitignored) for the full
-design document.
 
 ## Quick start
 

@@ -31,8 +31,8 @@ chroma service still exists — IAM references to the shared buckets will hang.
 
 ```bash
 # 0. Pick the project
-PROJECT_ID=micromed-agents
-REGION=southamerica-east1
+PROJECT_ID=my-agents-prod
+REGION=us-central1
 
 # 1. One-time imperative bootstrap (APIs + tfstate bucket + registry + firestore)
 ./scripts/bootstrap-project.sh "$PROJECT_ID" "$REGION"
@@ -64,7 +64,7 @@ One directory, one apply — but **initialise the backend with a unique prefix**
 so each agent gets its own state file:
 
 ```bash
-AGENT_ID=ecg-expert
+AGENT_ID=my-expert
 IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/expert-agent/backend:v0.1.0"
 
 cd infra/agent
@@ -138,6 +138,6 @@ project (collection-per-agent isolation) to amortise.
 
 - **One file per concern** inside each stack (`apis.tf`, `storage.tf`, …).
 - **No provisioners / local-exec** — everything is declarative.
-- **Every hardcoded string is a variable** — no `micromed-agents` literals.
+- **Every hardcoded string is a variable** — no project-specific literals.
 - **Post-apply manual steps are always documented** next to the resource
   (search for `TODO(expert-agent):` in the `.tf` files).

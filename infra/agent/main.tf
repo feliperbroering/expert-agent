@@ -11,7 +11,7 @@ terraform {
   # `prefix` is intentionally left blank here and MUST be passed at init
   # time so every agent gets its own state file, e.g.:
   #   tofu init -backend-config="bucket=<PROJECT_ID>-tfstate" \
-  #             -backend-config="prefix=agent/ecg-expert"
+  #             -backend-config="prefix=agent/<AGENT_ID>"
   backend "gcs" {}
 }
 

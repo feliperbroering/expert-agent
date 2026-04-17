@@ -1,6 +1,6 @@
 # Copy to `terraform.tfvars` (gitignored) or pass with -var-file.
-project_id = "micromed-agents"
-region     = "southamerica-east1"
+project_id = "your-gcp-project-id"
+region     = "us-central1"
 
 # Optional overrides:
 # chroma_image = "chromadb/chroma:0.5.20"

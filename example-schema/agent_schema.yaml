@@ -7,7 +7,7 @@ metadata:
 spec:
   model:
     provider: gemini
-    name: gemini-3.1-pro
+    name: gemini-2.5-pro
     temperature: 0.3
     max_output_tokens: 8192
     top_p: 0.95

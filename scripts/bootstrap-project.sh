@@ -7,7 +7,7 @@
 #   ./scripts/bootstrap-project.sh <PROJECT_ID> [REGION]
 #
 # Example:
-#   ./scripts/bootstrap-project.sh micromed-agents southamerica-east1
+#   ./scripts/bootstrap-project.sh my-agents-prod us-central1
 
 set -euo pipefail
 
