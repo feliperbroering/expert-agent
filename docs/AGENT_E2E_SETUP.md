@@ -136,9 +136,9 @@ jobs:
 
 | Placeholder                            | Concrete example                                                              | Notes                                                                                                              |
 |----------------------------------------|-------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
-| `<<agent-id>>`                         | `ecg-expert`                                                                  | Just for the workflow filename + display name.                                                                     |
-| `<<path/to/agent_schema.yaml>>`        | `ecg-expert/agent_schema.yaml`                                                | **Must be relative to the repo root.** Validated by the reusable workflow before running.                          |
-| `<<a question your agent should answer well>>` | `"Qual fórmula de correção do QTc a AHA recomenda como padrão?"` | Used by `05_ask_latency`. Pick something representative of real traffic.                                           |
+| `<<agent-id>>`                         | `my-expert`                                                                   | Just for the workflow filename + display name.                                                                     |
+| `<<path/to/agent_schema.yaml>>`        | `my-expert/agent_schema.yaml`                                                 | **Must be relative to the repo root.** Validated by the reusable workflow before running.                          |
+| `<<a question your agent should answer well>>` | `"What's a representative question for your agent?"`                | Used by `05_ask_latency`. Pick something representative of real traffic.                                           |
 | `<<ref>>`                              | `main`, `v0.1.1`, `v0.2.0`                                                    | Pin to a tag for stable runs (e.g. `v0.1.1`); use `main` only if you want to live on the bleeding edge.            |
 
 ### File naming convention
@@ -146,7 +146,7 @@ jobs:
 Use `e2e-<agent-id>.yml`. Examples:
 
 ```
-.github/workflows/e2e-ecg-expert.yml
+.github/workflows/e2e-my-expert.yml
 .github/workflows/e2e-derm-expert.yml
 .github/workflows/e2e-pharma-expert.yml
 ```
@@ -232,8 +232,8 @@ jobs:
       fail-fast: false
       matrix:
         agent:
-          - { name: ecg,  schema: ecg-expert/agent_schema.yaml,  endpoint_secret: ECG_ENDPOINT,  key_secret: ECG_API_KEY }
-          - { name: derm, schema: derm-expert/agent_schema.yaml, endpoint_secret: DERM_ENDPOINT, key_secret: DERM_API_KEY }
+          - { name: my-expert, schema: my-expert/agent_schema.yaml, endpoint_secret: MY_EXPERT_ENDPOINT, key_secret: MY_EXPERT_API_KEY }
+          - { name: derm,      schema: derm-expert/agent_schema.yaml, endpoint_secret: DERM_ENDPOINT,    key_secret: DERM_API_KEY }
     uses: feliperbroering/expert-agent/.github/workflows/expert-e2e.yml@<<ref>>
     with:
       schema: ${{ matrix.agent.schema }}
@@ -248,8 +248,8 @@ Locally, the same layout lets you do:
 
 ```bash
 expert agents                   # list all known agents
-expert use ecg                  # pin ecg for this shell
-expert ask "..."                # routes to ecg
+expert use my-expert            # pin my-expert for this shell
+expert ask "..."                # routes to my-expert
 expert @derm ask "..."          # one-off hop to derm
 expert test --agent derm        # run the packaged E2E kit against derm
 ```

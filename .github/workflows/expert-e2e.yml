@@ -7,7 +7,7 @@ name: expert-e2e (reusable)
 #     e2e:
 #       uses: feliperbroering/expert-agent/.github/workflows/expert-e2e.yml@main
 #       with:
-#         schema: ecg-expert/agent_schema.yaml
+#         schema: my-expert/agent_schema.yaml
 #         suite: 05_ask_latency
 #       secrets:
 #         endpoint: ${{ secrets.EXPERT_AGENT_ENDPOINT }}

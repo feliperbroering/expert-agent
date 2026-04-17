@@ -32,15 +32,15 @@ cwd, preserving the historical behaviour (``./agent_schema.yaml``).
 ```toml
 # Optional per-workspace defaults.
 [defaults]
-agent = "ecg"      # Default agent when no flag / active pointer is set.
+agent = "my-expert"  # Default agent when no flag / active pointer is set.
 
 # One section per agent. The key becomes the canonical name.
-[agents.ecg]
-schema      = "ecg-expert/agent_schema.yaml"   # Required. Relative to this file.
-endpoint    = "https://ecg-xxx.a.run.app"      # Optional override.
-api_key_env = "ECG_ADMIN_KEY"                  # Optional. Takes precedence over api_key.
-api_key     = "..."                            # Optional, discouraged (use env).
-description = "ECG-specialist clinical agent."  # Optional free-form.
+[agents.my-expert]
+schema      = "my-expert/agent_schema.yaml"      # Required. Relative to this file.
+endpoint    = "https://my-expert-xxx.a.run.app"  # Optional override.
+api_key_env = "MY_EXPERT_ADMIN_KEY"              # Optional. Takes precedence over api_key.
+api_key     = "..."                              # Optional, discouraged (use env).
+description = "Primary expert agent (free-form)."  # Optional.
 
 [agents.derm]
 schema = "derm-expert/agent_schema.yaml"

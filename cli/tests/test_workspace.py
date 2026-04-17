@@ -72,11 +72,11 @@ def test_single_agent_mode(tmp_path: Path) -> None:
 
 
 def test_auto_discover_siblings(tmp_path: Path) -> None:
-    _mk_schema(tmp_path / "ecg")
+    _mk_schema(tmp_path / "my-expert")
     _mk_schema(tmp_path / "derm")
     ws = Workspace.discover(cwd=tmp_path)
     assert ws.single_agent_mode is False
-    assert set(ws.agents_by_name) == {"ecg", "derm"}
+    assert set(ws.agents_by_name) == {"my-expert", "derm"}
     assert all(info.source == "auto" for info in ws.agents())
 
 
@@ -84,27 +84,27 @@ def test_toml_overrides_auto(tmp_path: Path) -> None:
     _mk_workspace(
         tmp_path,
         agents={
-            "ecg": {"schema": "ecg/agent_schema.yaml", "endpoint": "https://ecg"},
+            "my-expert": {"schema": "my-expert/agent_schema.yaml", "endpoint": "https://my-expert"},
             "derm": {"schema": "derm/agent_schema.yaml"},
         },
-        default="ecg",
+        default="my-expert",
     )
     ws = Workspace.discover(cwd=tmp_path)
-    assert ws.default_agent == "ecg"
-    assert ws.agents_by_name["ecg"].source == "toml"
-    assert ws.agents_by_name["ecg"].endpoint == "https://ecg"
+    assert ws.default_agent == "my-expert"
+    assert ws.agents_by_name["my-expert"].source == "toml"
+    assert ws.agents_by_name["my-expert"].endpoint == "https://my-expert"
 
 
 def test_toml_plus_sibling_not_declared(tmp_path: Path) -> None:
     """Declared agents + undeclared siblings should coexist."""
     _mk_workspace(
         tmp_path,
-        agents={"ecg": {"schema": "ecg/agent_schema.yaml"}},
+        agents={"my-expert": {"schema": "my-expert/agent_schema.yaml"}},
     )
     _mk_schema(tmp_path / "derm")
     ws = Workspace.discover(cwd=tmp_path)
-    assert set(ws.agents_by_name) == {"ecg", "derm"}
-    assert ws.agents_by_name["ecg"].source == "toml"
+    assert set(ws.agents_by_name) == {"my-expert", "derm"}
+    assert ws.agents_by_name["my-expert"].source == "toml"
     assert ws.agents_by_name["derm"].source == "auto"
 
 
@@ -116,18 +116,18 @@ def test_toml_plus_sibling_not_declared(tmp_path: Path) -> None:
 def test_resolve_explicit_selector_wins(tmp_path: Path) -> None:
     _mk_workspace(
         tmp_path,
-        agents={"ecg": {}, "derm": {}},
-        default="ecg",
+        agents={"my-expert": {}, "derm": {}},
+        default="my-expert",
     )
     ws = Workspace.discover(cwd=tmp_path)
-    ws.set_active("ecg")
+    ws.set_active("my-expert")
     ctx = ws.resolve(selector="derm")
     assert ctx.name == "derm"
     assert ctx.selector_source == "flag"
 
 
 def test_resolve_env_var(tmp_path: Path) -> None:
-    _mk_workspace(tmp_path, agents={"ecg": {}, "derm": {}})
+    _mk_workspace(tmp_path, agents={"my-expert": {}, "derm": {}})
     ws = Workspace.discover(cwd=tmp_path)
     ctx = ws.resolve(env={"EXPERT_AGENT": "derm"})
     assert ctx.name == "derm"
@@ -135,7 +135,7 @@ def test_resolve_env_var(tmp_path: Path) -> None:
 
 
 def test_resolve_active_pin(tmp_path: Path) -> None:
-    _mk_workspace(tmp_path, agents={"ecg": {}, "derm": {}})
+    _mk_workspace(tmp_path, agents={"my-expert": {}, "derm": {}})
     ws = Workspace.discover(cwd=tmp_path)
     ws.set_active("derm")
     ctx = ws.resolve(env={})
@@ -144,49 +144,49 @@ def test_resolve_active_pin(tmp_path: Path) -> None:
 
 
 def test_resolve_default_from_toml(tmp_path: Path) -> None:
-    _mk_workspace(tmp_path, agents={"ecg": {}, "derm": {}}, default="ecg")
+    _mk_workspace(tmp_path, agents={"my-expert": {}, "derm": {}}, default="my-expert")
     ws = Workspace.discover(cwd=tmp_path)
     ctx = ws.resolve(env={})
-    assert ctx.name == "ecg"
+    assert ctx.name == "my-expert"
     assert ctx.selector_source == "default"
 
 
 def test_resolve_ambiguous(tmp_path: Path) -> None:
-    _mk_workspace(tmp_path, agents={"ecg": {}, "derm": {}})
+    _mk_workspace(tmp_path, agents={"my-expert": {}, "derm": {}})
     ws = Workspace.discover(cwd=tmp_path)
     with pytest.raises(AmbiguousAgentError) as exc_info:
         ws.resolve(env={})
     assert "Multiple agents" in str(exc_info.value)
     names = {c.name for c in exc_info.value.candidates}
-    assert names == {"ecg", "derm"}
+    assert names == {"my-expert", "derm"}
 
 
 def test_resolve_unique_prefix(tmp_path: Path) -> None:
-    _mk_workspace(tmp_path, agents={"ecg-expert": {}, "derm": {}})
+    _mk_workspace(tmp_path, agents={"my-expert": {}, "derm": {}})
     ws = Workspace.discover(cwd=tmp_path)
-    ctx = ws.resolve(selector="ecg")
-    assert ctx.name == "ecg-expert"
+    ctx = ws.resolve(selector="my")
+    assert ctx.name == "my-expert"
 
 
 def test_resolve_ambiguous_prefix(tmp_path: Path) -> None:
-    _mk_workspace(tmp_path, agents={"ecg-expert": {}, "ecg-trainer": {}})
+    _mk_workspace(tmp_path, agents={"my-expert": {}, "my-trainer": {}})
     ws = Workspace.discover(cwd=tmp_path)
     with pytest.raises(AmbiguousAgentError):
-        ws.resolve(selector="ecg")
+        ws.resolve(selector="my")
 
 
 def test_resolve_unknown_selector(tmp_path: Path) -> None:
-    _mk_workspace(tmp_path, agents={"ecg": {}})
+    _mk_workspace(tmp_path, agents={"my-expert": {}})
     ws = Workspace.discover(cwd=tmp_path)
     with pytest.raises(AgentNotFoundError):
         ws.resolve(selector="nope")
 
 
 def test_resolve_at_alias_prefix_strip(tmp_path: Path) -> None:
-    _mk_workspace(tmp_path, agents={"ecg": {}, "derm": {}})
+    _mk_workspace(tmp_path, agents={"my-expert": {}, "derm": {}})
     ws = Workspace.discover(cwd=tmp_path)
-    ctx = ws.resolve(selector="@ecg")
-    assert ctx.name == "ecg"
+    ctx = ws.resolve(selector="@my-expert")
+    assert ctx.name == "my-expert"
 
 
 def test_resolve_schema_override_bypasses_workspace(tmp_path: Path) -> None:
@@ -208,17 +208,22 @@ def test_api_key_from_env_via_api_key_env(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("MY_ECG_KEY", "sk-from-env")
+    monkeypatch.setenv("MY_EXPERT_KEY", "sk-from-env")
     _mk_workspace(
         tmp_path,
-        agents={"ecg": {"schema": "ecg/agent_schema.yaml", "api_key_env": "MY_ECG_KEY"}},
+        agents={
+            "my-expert": {
+                "schema": "my-expert/agent_schema.yaml",
+                "api_key_env": "MY_EXPERT_KEY",
+            }
+        },
     )
     ws = Workspace.discover(cwd=tmp_path)
-    assert ws.agents_by_name["ecg"].api_key == "sk-from-env"
+    assert ws.agents_by_name["my-expert"].api_key == "sk-from-env"
 
 
 def test_env_endpoint_fills_when_toml_missing(tmp_path: Path) -> None:
-    _mk_workspace(tmp_path, agents={"ecg": {}})
+    _mk_workspace(tmp_path, agents={"my-expert": {}})
     ws = Workspace.discover(cwd=tmp_path)
     ctx = ws.resolve(env={"EXPERT_AGENT_ENDPOINT": "https://x", "EXPERT_AGENT_API_KEY": "k"})
     assert ctx.endpoint == "https://x"
@@ -226,7 +231,7 @@ def test_env_endpoint_fills_when_toml_missing(tmp_path: Path) -> None:
 
 
 def test_require_remote_raises_when_incomplete(tmp_path: Path) -> None:
-    _mk_workspace(tmp_path, agents={"ecg": {}})
+    _mk_workspace(tmp_path, agents={"my-expert": {}})
     ws = Workspace.discover(cwd=tmp_path)
     ctx = ws.resolve(env={})
     with pytest.raises(WorkspaceError):
@@ -239,7 +244,7 @@ def test_require_remote_raises_when_incomplete(tmp_path: Path) -> None:
 
 
 def test_set_active_writes_state(tmp_path: Path) -> None:
-    _mk_workspace(tmp_path, agents={"ecg": {}, "derm": {}})
+    _mk_workspace(tmp_path, agents={"my-expert": {}, "derm": {}})
     ws = Workspace.discover(cwd=tmp_path)
     ws.set_active("derm")
     state = json.loads(ws.state_file.read_text())
@@ -248,15 +253,15 @@ def test_set_active_writes_state(tmp_path: Path) -> None:
 
 
 def test_clear_active(tmp_path: Path) -> None:
-    _mk_workspace(tmp_path, agents={"ecg": {}})
+    _mk_workspace(tmp_path, agents={"my-expert": {}})
     ws = Workspace.discover(cwd=tmp_path)
-    ws.set_active("ecg")
+    ws.set_active("my-expert")
     ws.clear_active()
     assert ws.active() is None
 
 
 def test_set_active_rejects_unknown(tmp_path: Path) -> None:
-    _mk_workspace(tmp_path, agents={"ecg": {}})
+    _mk_workspace(tmp_path, agents={"my-expert": {}})
     ws = Workspace.discover(cwd=tmp_path)
     with pytest.raises(AgentNotFoundError):
         ws.set_active("nope")
