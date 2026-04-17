@@ -21,14 +21,14 @@ from typing import Annotated
 
 import typer
 
-from . import __version__
+from .brand import render_brand
 from .commands import agents as agents_commands
 from .commands import ask, count_tokens, init, sessions, sync, test, validate
 from .ui import console
 
 app = typer.Typer(
     name="expert",
-    help="CLI for the **expert-agent** framework — scaffold, validate, sync, ask.",
+    help="ground a model on your docs. ship it as an API.",
     no_args_is_help=True,
     rich_markup_mode="markdown",
     add_completion=True,
@@ -37,8 +37,13 @@ app = typer.Typer(
 
 def _version_callback(value: bool) -> None:
     if value:
-        console.print(f"expert {__version__}")
+        render_brand(console, include_version=True)
         raise typer.Exit(code=0)
+
+
+def _brand_cmd() -> None:
+    """Print the expert brand block (wordmark + tagline + version)."""
+    render_brand(console, include_version=True)
 
 
 @app.callback()
@@ -58,8 +63,8 @@ def _root(
 
 
 # Subcommands that accept `--agent`. Used by the @alias rewriter so that
-# nonsense like `expert @derm use ecg` falls through to a useful error
-# instead of silently rewriting into `expert use ecg --agent derm`.
+# nonsense like `expert @derm use my-expert` falls through to a useful error
+# instead of silently rewriting into `expert use my-expert --agent derm`.
 _AGENT_AWARE: frozenset[str] = frozenset(
     {"ask", "validate", "count-tokens", "sync", "test", "sessions", "which"}
 )
@@ -70,9 +75,9 @@ def _rewrite_at_alias(argv: list[str]) -> list[str]:
 
     Examples::
 
-        expert @ecg ask "hi"        → expert ask "hi" --agent ecg
+        expert @my-expert ask "hi"  → expert ask "hi" --agent my-expert
         expert @derm sessions list  → expert sessions list --agent derm
-        expert @ecg                 → expert agents --agent ecg (listing mode)
+        expert @my-expert           → expert agents --agent my-expert (listing mode)
 
     Safe no-ops:
 
@@ -131,6 +136,11 @@ app.command(
     name="which",
     help="Print which agent a bare command would resolve to.",
 )(agents_commands.which_cmd)
+app.command(
+    name="brand",
+    help="Print the expert wordmark + version (fun, mostly).",
+    hidden=True,
+)(_brand_cmd)
 
 
 def main() -> None:
