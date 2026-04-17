@@ -274,6 +274,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             exclude_patterns=schema.spec.knowledge.exclude_patterns,
         )
         if schema.spec.context_cache.enabled:
+            # Warm the cache before accepting traffic. Without this, the first
+            # user request after a cold start pays the ~30s recreate penalty
+            # (File API uploads + cachedContents POST) if the Firestore state
+            # points to an expired cache. Cloud Run startup probes allow up to
+            # 240s, so even a full recreate still fits inside the probe window.
+            try:
+                await cache_manager.get_or_create()
+            except Exception as exc:
+                logger.warning("cache.prewarm_failed", error=str(exc))
+
             refresher = CacheRefresher(
                 llm=llm,
                 cache_manager=cache_manager,

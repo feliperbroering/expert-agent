@@ -38,7 +38,9 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/venv/bin:${PATH}" \
     PORT=8080 \
-    APP_ENV=production
+    APP_ENV=production \
+    HOME=/tmp \
+    XDG_CACHE_HOME=/tmp/.cache
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates \
