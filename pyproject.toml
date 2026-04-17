@@ -119,6 +119,10 @@ ignore = ["E501"]  # handled by formatter
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["B011", "N802"]
+# `ExpertLibrary.py` is a Robot Framework library — Robot imports libraries
+# by filename and expects PascalCase to mirror the Python class inside. The
+# ruff lowercase-module-name rule (N999) doesn't apply here.
+"cli/expert/testkit/ExpertLibrary.py" = ["N999"]
 
 [tool.mypy]
 python_version = "3.12"

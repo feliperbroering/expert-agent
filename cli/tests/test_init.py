@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from expert.main import app
 from app.schema import AgentSchema
+from expert.main import app
 from typer.testing import CliRunner
 
 

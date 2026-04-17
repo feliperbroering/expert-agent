@@ -69,7 +69,7 @@ def main() -> None:
     bucket = client.bucket(args.bucket)
 
     files: dict[str, FileEntry] = {}
-    for relpath, walked in walk_manifest.files.items():
+    for relpath, _walked in walk_manifest.files.items():
         local = docs_dir / relpath
         sha = compute_file_sha256(local)
         mime = guess_mime(local)

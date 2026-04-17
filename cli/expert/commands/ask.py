@@ -118,9 +118,7 @@ def cmd(
         print_error(f"server returned {status}.")
         raise typer.Exit(code=2) from exc
     except httpx.ConnectError as exc:
-        print_error(
-            f"could not connect to {endpoint}. Is the agent running and reachable?"
-        )
+        print_error(f"could not connect to {endpoint}. Is the agent running and reachable?")
         raise typer.Exit(code=2) from exc
     except httpx.HTTPError as exc:
         print_error(f"network error: {exc}")
@@ -207,11 +205,7 @@ def _snake_frame(tick: int, status: str = "Thinking") -> Text:
     for i in range(_SNAKE_WIDTH):
         offset = (head - i) % _SNAKE_WIDTH
         if offset < _SNAKE_TRAIL:
-            style = (
-                _HEAD_GRADIENT[offset]
-                if offset < len(_HEAD_GRADIENT)
-                else _HEAD_GRADIENT[-1]
-            )
+            style = _HEAD_GRADIENT[offset] if offset < len(_HEAD_GRADIENT) else _HEAD_GRADIENT[-1]
             text.append(_SNAKE_HEAD_CHAR, style=style)
         else:
             text.append(_SNAKE_REST_CHAR, style="grey30")

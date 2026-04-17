@@ -8,6 +8,7 @@ All keywords are thin and composable — heavy assertions live in the suites.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import shlex
@@ -70,7 +71,7 @@ class ExpertLibrary:
         cmd = [binary, *args]
         logger.info(f"$ {shlex.join(cmd)}")
         started = time.monotonic()
-        proc = subprocess.run(  # noqa: S603  # command is trusted, args come from the suite
+        proc = subprocess.run(  # command is trusted, args come from the suite
             cmd,
             cwd=cwd,
             capture_output=True,
@@ -209,12 +210,10 @@ class ExpertLibrary:
                 src_sub = root / sub
                 dst_sub = target_dir / sub
                 if src_sub.is_dir() and not dst_sub.exists():
-                    try:
+                    # Fall back silently if the FS doesn't support symlinks;
+                    # the suite will then fail with a clearer error message.
+                    with contextlib.suppress(OSError):
                         dst_sub.symlink_to(src_sub, target_is_directory=True)
-                    except OSError:
-                        # Fall back to ignoring if the FS doesn't support symlinks;
-                        # the suite will then fail with a clearer error message.
-                        pass
         return str(target)
 
     @keyword("Bump Schema Version")
@@ -242,13 +241,9 @@ class ExpertLibrary:
         }
         if self._api_key:
             headers["Authorization"] = f"Bearer {self._api_key}"
-        return httpx.Client(
-            base_url=self._endpoint, headers=headers, timeout=self._timeout
-        )
+        return httpx.Client(base_url=self._endpoint, headers=headers, timeout=self._timeout)
 
-    def _ask_stream(
-        self, payload: dict[str, Any], *, session_id: str | None = None
-    ) -> _AskResult:
+    def _ask_stream(self, payload: dict[str, Any], *, session_id: str | None = None) -> _AskResult:
         headers = {"Accept": "text/event-stream"}
         ttft_ms: int | None = None
         events: list[dict[str, Any]] = []
@@ -293,5 +288,5 @@ class ExpertLibrary:
 def _safe_json(resp: httpx.Response) -> Any:
     try:
         return resp.json()
-    except Exception:  # noqa: BLE001  # intentional: return raw text on decode errors
+    except Exception:  # intentional: return raw text on decode errors
         return {"raw": resp.text}

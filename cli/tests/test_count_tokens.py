@@ -36,9 +36,7 @@ def _seed_project(tmp_path: Path) -> Path:
     return schema
 
 
-def test_count_tokens_sums_across_files(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_count_tokens_sums_across_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     schema = _seed_project(tmp_path)
 
     per_call_tokens = [7, 42]
@@ -74,9 +72,7 @@ def test_count_tokens_sums_across_files(
     assert fake_client.aio.models.count_tokens.await_count == 2
 
 
-def test_count_tokens_warns_on_large_total(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_count_tokens_warns_on_large_total(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     schema = _seed_project(tmp_path)
 
     async def fake_count(*, model: str, contents: Any) -> Any:

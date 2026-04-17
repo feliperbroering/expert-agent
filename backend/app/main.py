@@ -78,7 +78,7 @@ def _materialize_schema_tree(source: str, dest_dir: Path) -> Path:
     bucket = client.bucket(bucket_name)
 
     for blob in bucket.list_blobs(prefix=prefix):
-        rel = blob.name[len(prefix):]
+        rel = blob.name[len(prefix) :]
         if not rel:
             continue
         target = dest_dir / rel

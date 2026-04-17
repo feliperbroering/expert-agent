@@ -97,8 +97,7 @@ def cmd(
         from ..testkit import suites_dir
     except ImportError as exc:  # pragma: no cover — import-time guard
         print_error(
-            "Packaged test kit not found. Reinstall with "
-            "`uv tool install 'expert-agent[test]'`."
+            "Packaged test kit not found. Reinstall with `uv tool install 'expert-agent[test]'`."
         )
         raise typer.Exit(code=2) from exc
 
@@ -152,8 +151,10 @@ def cmd(
         raise typer.Exit(code=2) from exc
 
     args: list[str] = [
-        "--outputdir", str(output_dir),
-        "--name", "expert-agent-e2e",
+        "--outputdir",
+        str(output_dir),
+        "--name",
+        "expert-agent-e2e",
     ]
     for tag in include or []:
         args.extend(["--include", tag])

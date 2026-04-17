@@ -117,9 +117,7 @@ def _prompt_name(default: str) -> str:
         value: str = typer.prompt("Agent name", default=default)
         value = value.strip()
         if not _AGENT_NAME_RE.match(value):
-            print_error(
-                "name must match ^[a-z][a-z0-9-]*$ (lowercase letters, digits, hyphens)."
-            )
+            print_error("name must match ^[a-z][a-z0-9-]*$ (lowercase letters, digits, hyphens).")
             continue
         if len(value) > 63:
             print_error("name must be at most 63 characters (Cloud Run service name limit).")
@@ -175,10 +173,7 @@ def cmd(
 
     if description is None:
         fallback = f"Ultra-specialist agent '{name}'."
-        if yes:
-            description = fallback
-        else:
-            description = typer.prompt("Description", default=fallback).strip()
+        description = fallback if yes else typer.prompt("Description", default=fallback).strip()
     description = description.strip()
 
     path = path.resolve()

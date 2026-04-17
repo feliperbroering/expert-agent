@@ -73,9 +73,7 @@ async def _count_all(
             try:
                 text = file_path.read_text(encoding="utf-8")
             except UnicodeDecodeError:
-                warnings.append(
-                    f"{file_path}: not valid UTF-8, skipping token count."
-                )
+                warnings.append(f"{file_path}: not valid UTF-8, skipping token count.")
                 rows.append(
                     {"path": file_path, "tokens": 0, "method": "skipped", "size": size_bytes}
                 )
@@ -101,12 +99,8 @@ async def _count_all(
             except (UnicodeDecodeError, OSError):
                 tokens = _heuristic_pdf_tokens(size_bytes)
                 method = "heuristic"
-                warnings.append(
-                    f"{file_path}: unsupported type, falling back to heuristic."
-                )
-            rows.append(
-                {"path": file_path, "tokens": tokens, "method": method, "size": size_bytes}
-            )
+                warnings.append(f"{file_path}: unsupported type, falling back to heuristic.")
+            rows.append({"path": file_path, "tokens": tokens, "method": method, "size": size_bytes})
         total += tokens
     return rows, total, warnings
 

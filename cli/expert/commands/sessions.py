@@ -20,9 +20,7 @@ app = typer.Typer(
 )
 
 
-async def _get_json(
-    endpoint: str, api_key: str, path: str
-) -> Any:
+async def _get_json(endpoint: str, api_key: str, path: str) -> Any:
     async with make_http_client(endpoint=endpoint, api_key=api_key) as client:
         response = await client.get(path)
         response.raise_for_status()
@@ -55,15 +53,11 @@ def _run(coro: Any) -> Any:
 
 _EndpointOpt = Annotated[
     str,
-    typer.Option(
-        "--endpoint", envvar="EXPERT_AGENT_ENDPOINT", help="Base URL of the agent."
-    ),
+    typer.Option("--endpoint", envvar="EXPERT_AGENT_ENDPOINT", help="Base URL of the agent."),
 ]
 _ApiKeyOpt = Annotated[
     str,
-    typer.Option(
-        "--api-key", envvar="EXPERT_AGENT_API_KEY", help="Admin bearer token."
-    ),
+    typer.Option("--api-key", envvar="EXPERT_AGENT_API_KEY", help="Admin bearer token."),
 ]
 
 
