@@ -1,12 +1,19 @@
 """`agent-cli ask` — send a question to an agent and stream the answer.
 
-Uses SSE (Server-Sent Events). The server emits events of types:
+Uses SSE (Server-Sent Events). The server (see `backend/app/routes/ask.py`)
+emits events of types:
 
-- `delta`    — partial answer text. Payload: `{"text": "..."}`.
-- `citation` — a retrieved source. Payload: `{"title": "...", "url": "..."}`.
-- `done`    — end of stream, with usage summary. Payload:
-              `{"usage": {"input_tokens": int, "output_tokens": int, "cost_usd": float}}`.
-- `error`   — server-side error. Payload: `{"message": "..."}`.
+- `token`    — partial answer text. Payload: `{"text": "...", "request_id": "..."}`.
+- `citation` — a retrieved source. Payload:
+              `{"source_uri": "...", "start_index": int, "end_index": int, "snippet": "..."}`.
+- `done`     — end of stream, with usage summary. Payload:
+              `{"finish_reason": "...",
+                "usage": {"input_tokens": int, "output_tokens": int, "cached_tokens": int},
+                "citations": [...]}`.
+- `error`    — server-side error. Payload: `{"detail": "..."}`.
+
+The non-streaming JSON response shape is `AskSyncResponse`:
+`{"text": "...", "citations": [...], "usage": {...}, "request_id": "..."}`.
 """
 
 from __future__ import annotations
@@ -45,14 +52,17 @@ async def _oneshot(client: httpx.AsyncClient, payload: dict[str, Any]) -> int:
     response = await client.post("/ask", json={**payload, "stream": False})
     response.raise_for_status()
     body = response.json()
-    text = str(body.get("answer", ""))
-    console.print(Markdown(text))
+    text = str(body.get("text", ""))
+    if text:
+        console.print(Markdown(text))
     citations = body.get("citations") or []
     if citations:
         _print_citations(citations)
     usage = body.get("usage")
     if isinstance(usage, dict):
         _print_usage(usage)
+    if not text:
+        print_info("Server returned an empty answer.")
     return 0
 
 
@@ -72,7 +82,7 @@ async def _live_stream(client: httpx.AsyncClient, payload: dict[str, Any]) -> in
         response.raise_for_status()
         with Live(Markdown(""), console=console, refresh_per_second=12, vertical_overflow="visible") as live:
             async for event_type, data in _iter_sse(response):
-                if event_type == "delta":
+                if event_type == "token":
                     text = str(data.get("text", ""))
                     if text:
                         answer.append(text)
@@ -83,15 +93,20 @@ async def _live_stream(client: httpx.AsyncClient, payload: dict[str, Any]) -> in
                     u = data.get("usage")
                     if isinstance(u, dict):
                         usage = u
+                    extra = data.get("citations")
+                    if isinstance(extra, list) and not citations:
+                        citations.extend(extra)
                     break
                 elif event_type == "error":
-                    message = str(data.get("message", "unknown error"))
+                    message = str(data.get("detail") or data.get("message") or "unknown error")
                     raise _ServerError(message)
 
     if citations:
         _print_citations(citations)
     if usage is not None:
         _print_usage(usage)
+    if not answer:
+        print_info("Server returned an empty answer.")
     return 0
 
 
@@ -127,20 +142,34 @@ def _print_citations(citations: list[dict[str, Any]]) -> None:
     console.print()
     console.print("[bold]Sources[/bold]")
     for idx, citation in enumerate(citations, start=1):
-        title = citation.get("title") or citation.get("path") or "source"
-        url = citation.get("url") or citation.get("path") or ""
-        console.print(f"  [{idx}] [cyan]{title}[/cyan] [dim]{url}[/dim]")
+        source = (
+            citation.get("source_uri")
+            or citation.get("url")
+            or citation.get("path")
+            or citation.get("title")
+            or "source"
+        )
+        snippet = citation.get("snippet") or ""
+        if snippet:
+            snippet_line = snippet if len(snippet) <= 120 else snippet[:117] + "..."
+            console.print(f"  [{idx}] [cyan]{source}[/cyan]")
+            console.print(f"      [dim]{snippet_line}[/dim]")
+        else:
+            console.print(f"  [{idx}] [cyan]{source}[/cyan]")
 
 
 def _print_usage(usage: dict[str, Any]) -> None:
     input_tokens = usage.get("input_tokens")
     output_tokens = usage.get("output_tokens")
+    cached_tokens = usage.get("cached_tokens")
     cost = usage.get("cost_usd")
     parts: list[str] = []
     if input_tokens is not None:
         parts.append(f"in={input_tokens:,}")
     if output_tokens is not None:
         parts.append(f"out={output_tokens:,}")
+    if cached_tokens:
+        parts.append(f"cached={cached_tokens:,}")
     if cost is not None:
         parts.append(f"cost=${float(cost):.4f}")
     if parts:
@@ -226,4 +255,3 @@ def cmd(
 
     if exit_code == 0 and not stream:
         print_success("Response complete.")
-    # TODO(expert-agent): surface a hint when no answer text was produced.

@@ -1,4 +1,9 @@
-"""Tests for `agent-cli ask` with streamed SSE responses."""
+"""Tests for `agent-cli ask`.
+
+The event/field names here MUST stay in lockstep with the server in
+`backend/app/routes/ask.py` (event types `token`, `citation`, `done`,
+`error`, with payload fields `text`, `source_uri`, `snippet`, `detail`).
+"""
 
 from __future__ import annotations
 
@@ -19,15 +24,35 @@ def _sse_body(events: list[tuple[str, dict[str, object]]]) -> bytes:
 
 
 @respx.mock
-def test_ask_streams_deltas_and_renders_final_markdown() -> None:
+def test_ask_streams_tokens_and_renders_final_markdown() -> None:
     body = _sse_body(
         [
-            ("delta", {"text": "Hello "}),
-            ("delta", {"text": "world!"}),
-            ("citation", {"title": "source-a.md", "url": "docs/source-a.md"}),
+            ("token", {"type": "token", "text": "Hello ", "request_id": "r1"}),
+            ("token", {"type": "token", "text": "world!", "request_id": "r1"}),
+            (
+                "citation",
+                {
+                    "type": "citation",
+                    "request_id": "r1",
+                    "source_uri": "gs://bucket/docs/source-a.md",
+                    "start_index": 0,
+                    "end_index": 12,
+                    "snippet": "Example snippet from source A.",
+                },
+            ),
             (
                 "done",
-                {"usage": {"input_tokens": 123, "output_tokens": 45, "cost_usd": 0.0012}},
+                {
+                    "type": "done",
+                    "request_id": "r1",
+                    "finish_reason": "STOP",
+                    "usage": {
+                        "input_tokens": 123,
+                        "output_tokens": 45,
+                        "cached_tokens": 100,
+                    },
+                    "citations": [],
+                },
             ),
         ]
     )
@@ -60,6 +85,85 @@ def test_ask_streams_deltas_and_renders_final_markdown() -> None:
     assert "source-a.md" in result.output
     assert "in=123" in result.output
     assert "out=45" in result.output
+    assert "cached=100" in result.output
+
+
+@respx.mock
+def test_ask_non_stream_renders_text_from_json() -> None:
+    route = respx.post("https://agent.example.com/ask").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "text": "**Hello** world!",
+                "citations": [
+                    {
+                        "source_uri": "gs://bucket/docs/b.md",
+                        "start_index": 0,
+                        "end_index": 5,
+                        "snippet": "Bravo source snippet.",
+                    }
+                ],
+                "usage": {"input_tokens": 7, "output_tokens": 3, "cached_tokens": 0},
+                "request_id": "req-1",
+            },
+        )
+    )
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "ask",
+            "hi",
+            "--session",
+            "s-oneshot",
+            "--endpoint",
+            "https://agent.example.com",
+            "--api-key",
+            "secret",
+            "--no-stream",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert route.called
+    assert "Hello" in result.output
+    assert "world!" in result.output
+    assert "gs://bucket/docs/b.md" in result.output
+    assert "in=7" in result.output
+    assert "out=3" in result.output
+
+
+@respx.mock
+def test_ask_surfaces_server_error_detail() -> None:
+    body = _sse_body(
+        [
+            ("token", {"type": "token", "text": "partial ", "request_id": "r2"}),
+            ("error", {"type": "error", "request_id": "r2", "detail": "LLM blew up"}),
+        ]
+    )
+    respx.post("https://agent.example.com/ask").mock(
+        return_value=httpx.Response(
+            200,
+            content=body,
+            headers={"content-type": "text/event-stream"},
+        )
+    )
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "ask",
+            "trigger err",
+            "--session",
+            "s-err",
+            "--endpoint",
+            "https://agent.example.com",
+            "--api-key",
+            "secret",
+        ],
+    )
+    assert result.exit_code == 2
+    assert "LLM blew up" in result.output
 
 
 @respx.mock
